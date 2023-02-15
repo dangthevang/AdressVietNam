@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 import json
 import time
+import heapq
 from .__init__ import *
 
 def getAPI(request):
@@ -10,7 +11,7 @@ def getAPI(request):
     if 'query' in request.GET:
         input_string = request.GET['query']
         result = render_(input_string,data_co_dau,dict_co_dau,True,dict_index_co_dau)
-        Response = json.dumps(result)
+        Response = json.dumps(result, ensure_ascii=False).encode('utf8')
         return HttpResponse(Response, content_type='application/json', status=200)
     else:
         return HttpResponse(bad_request, content_type='application/json', status=400)
@@ -215,22 +216,26 @@ def filter_name_adress(text,list_index,dict_,data,number):
             yield idx
 
 
+
 def get_adress(x,data_,dict_,dict_index):
     arr = split_text(x,dict_)
+    # print(x)
     if len(arr) == 0:
         return pd.DataFrame(),None
+    # print(arr)
     index = 0
     check = False
     dict_result = step_adress(arr,data_,dict_,dict_index)
+    # print(dict_result)
     try:
-        max_ = max(list(dict_result.values()))
+        list_max = heapq.nlargest(2, list(dict_result.values()))
     except ValueError:
-        return pd.DataFrame(),0
+        return pd.DataFrame()
     arr_idx = []
     for key,value in dict_result.items():
-        if value == max_:
+        if value in list_max:
             arr_idx.append(key)
-    return data_.iloc[arr_idx],max_
+    return data_.iloc[arr_idx]
 
 list_word_active = [",","-",
                 "Huyện",
@@ -272,7 +277,7 @@ def render_(x,data_,dict_,test,dict_index_):
     }
     dict_Result = {}
     df,sdt = step_phone(x)
-    df,text = get_adress(x,data_,dict_,dict_index_)
+    df = get_adress(x,data_,dict_,dict_index_)
     if df.empty and test == True:
         x = convert_2(x)
         return render_(x,data_khong_dau,dict_khong_dau,False,dict_index_khong_dau)
@@ -298,7 +303,6 @@ def render_(x,data_,dict_,test,dict_index_):
                 t +=1
                 if t == 3:
                     break
-
         except:
             return dict_Result
     return dict_Result
