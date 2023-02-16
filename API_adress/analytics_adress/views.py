@@ -102,7 +102,7 @@ def format_number_adress(address_string,list_key):
             word = "".join([key_,symtax,"[1-9]+"])
             m_0 = re.search(word, sentence)
             if m_0 is not None:
-                key_word = str(m_0.group()).replace(symtax,"_")
+                key_word = str(m_0.group()).replace(symtax,"_").replace(key_,list_key[0])
                 return sentence.replace(str(m_0.group()),key_word)
     return sentence
 
@@ -261,8 +261,8 @@ def convert_2(text):
 
 
 def last_check(sentence,a):
-    sentence = convert_2(sentence).upper()
-    a = convert_2(a).upper()
+    sentence = convert_2(sentence.replace("_"," ")).upper()
+    a = convert_2(a.replace("_"," ")).upper()
     m_0 = re.search(sentence,a)
     if m_0 is not None:
         return 1
@@ -284,6 +284,8 @@ def render_(x,data_,dict_,test,dict_index_):
     else:
         for key,value in dict_alias.items():
             x = x.replace(key,value)
+        x = format_number_adress(x,["phường","f","p","phuong",])
+        x = format_number_adress(x,["quận","q","quan"])
         try:
             df["MatchTP"] = df.apply(lambda row: last_check(row["Tỉnh Thành Phố"],x),axis=1)
             df["MatchQH"] = df.apply(lambda row: last_check(row["Quận Huyện"],x),axis=1)
