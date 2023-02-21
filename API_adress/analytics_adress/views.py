@@ -250,7 +250,6 @@ list_word_active = [",","-",
                 "Tỉnh",
                 "TP",
                 "SDT"]
-
 def convert_2(text):
     output = ud.normalize("NFKC",text)
     for key in normalize_key:
@@ -275,7 +274,7 @@ def render_(x,data_,dict_,test,dict_index_):
         "Xã/Phường":None,
         "Số Điện Thoại":None
     }
-    dict_Result = {}
+    list_Result = []
     df,sdt = step_phone(x)
     df = get_adress(x,data_,dict_,dict_index_)
     if df.empty and test == True:
@@ -293,7 +292,7 @@ def render_(x,data_,dict_,test,dict_index_):
             df["FinalScore"] = df["MatchTP"]+df["MatchQH"]+df["MatchPX"]
             max_score_file = df["FinalScore"].max()
             if max_score_file == 0:
-                return dict_Result
+                return list_Result
             df_finan_result = df[df["FinalScore"] == max_score_file]
             t = 0
             for idx in df_finan_result.index:
@@ -301,10 +300,10 @@ def render_(x,data_,dict_,test,dict_index_):
                 dict_result_compoment["Quận/Huyện"] = df_finan_result["Quận Huyện"][idx]
                 dict_result_compoment["Xã/Phường"] = df_finan_result["Phường Xã"][idx]
                 dict_result_compoment["Số Điện Thoại"] = sdt
-                dict_Result[t] = dict_result_compoment.copy()
+                list_Result.append(dict_result_compoment.copy())
                 t +=1
                 if t == 3:
                     break
         except:
-            return dict_Result
-    return dict_Result
+            return list_Result
+    return list_Result
