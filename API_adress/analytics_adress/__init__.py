@@ -81,7 +81,7 @@ dict_alias = {
     "Hn": "Hà Nội",
     "Hcm": "Hồ Chí Minh",
     "Dn":"Đà Nẵng",
-    "brvt":"Bà Rịa Vũng Tàu"
+    "Brvt":"Bà Rịa Vũng Tàu"
 }
 for key, value in dict_alias.items():
     dict_co_dau[key] = 1
@@ -207,6 +207,19 @@ def create_arr_key(data_):
     for key,values in dict_.items():
         dict_[key] =  pd.unique(values)
     return dict_
+list_word_active = [",","-",
+                "Huyện",
+                "Thành Phố",
+                "Thị Xã",
+                "Quận",
+                "Phường ",
+                "Tt",
+                "xã",
+                "Thị Trấn",
+                "Tx"
+                "Tỉnh",
+                "TP",
+                "SDT"]
 
 dict_index_co_dau = create_arr_key(data_co_dau)
 dict_index_khong_dau = create_arr_key(data_khong_dau)

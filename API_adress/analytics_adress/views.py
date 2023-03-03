@@ -36,7 +36,6 @@ def step_phone(x):
     if phone != None:
         return x.replace(phone,""),phone
     return x,phone
-
 def caculator(x,dict_):
     s = 1
     list_text = x.copy()
@@ -86,7 +85,6 @@ def format_number_adress(address_string,list_key):
                 return sentence.replace(str(m_0.group()),key_word)
     return sentence
 
-
 def delete_key(sentence):
     arr = ["tp", "huyện ", "thành phố ", "thị xã ", "quận ", "phường ","tt ", "xã ", "thị trấn ", "tx "," h ",
            "tỉnh "]
@@ -99,8 +97,9 @@ def delete_key(sentence):
 def split_text(x,dict_):
     arr = []
     x = x.replace("-",' ').replace(",",' ').replace(".",' ').replace("_",' ')
-    x = format_number_adress(x,["f","p","phuong","phường"])
-    x = format_number_adress(x,["q","quận","quan"])
+    x = format_number_adress(x,["phường","f","p","phuong"])
+    x = format_number_adress(x,["quận","q","quan"])
+
     x = delete_key(x)
     x = x.split(" ")
     for i in range(len(x)):
@@ -123,8 +122,10 @@ def getIndexRange(text):
     return []
 
 def step_adress(x,data_,dict_,dict_index):
-    idx_run = 0,0
+    index,idx_run = 0,0
     amount = len(x)
+    result = pd.DataFrame()
+    text_result = None
     dict_result = {}
     for cap in range(amount,0,-1):
         idx_run = cap
@@ -183,6 +184,7 @@ def check_name_adress(text,tich,dict_key):
     return False
 
 def filter_name_adress(text,list_index,dict_,data,number):
+    # data = data.iloc[list_index]
     for idx in list_index:
         check = True
         for type_ in dict_relationship[number]:
@@ -195,36 +197,24 @@ def filter_name_adress(text,list_index,dict_,data,number):
             yield idx
 
 
-
 def get_adress(x,data_,dict_,dict_index):
     arr = split_text(x,dict_)
-
+    # print(x)
     if len(arr) == 0:
-        return pd.DataFrame(),None
+        return pd.DataFrame()," ".join(arr)
+    index = 0
+    check = False
     dict_result = step_adress(arr,data_,dict_,dict_index)
+    # print(dict_result)
     try:
         list_max = heapq.nlargest(2, list(dict_result.values()))
     except ValueError:
-        return pd.DataFrame()
+        return pd.DataFrame()," ".join(arr)
     arr_idx = []
     for key,value in dict_result.items():
         if value in list_max:
             arr_idx.append(key)
-    return data_.iloc[arr_idx]
-
-list_word_active = [",","-",
-                "Huyện",
-                "Thành Phố",
-                "Thị Xã",
-                "Quận",
-                "Phường ",
-                "Tt",
-                "xã",
-                "Thị Trấn",
-                "Tx"
-                "Tỉnh",
-                "TP",
-                "SDT"]
+    return data_.iloc[arr_idx]," ".join(arr)
 
 def convert_2(text):
     output = ud.normalize("NFKC",text)
@@ -251,7 +241,6 @@ def create_key(code,*arg):
     return s
 
 def render_(x,data_,dict_,test,dict_index_):
-    # print(x)
     list_key_result = ["Xã/Phường", "Quận/Huyện","Tỉnh/TP","Số Điện Thoại"]
     dict_result_compoment = {}
     for key in list_key_result:
@@ -259,15 +248,16 @@ def render_(x,data_,dict_,test,dict_index_):
     list_Result = []
     Address_Special = x
     df,sdt = step_phone(x)
-    df = get_adress(x,data_,dict_,dict_index_)
+    df,x = get_adress(x,data_,dict_,dict_index_)
     if df.empty and test == True:
         x = convert_2(x)
         return render_(x,data_khong_dau,dict_khong_dau,False,dict_index_khong_dau)
     else:
+        # print(x)
         for key,value in dict_alias.items():
             x = x.replace(key,value)
-        x = format_number_adress(x,["phường","f","p","phuong",])
-        x = format_number_adress(x,["quận","q","quan"])
+        # x = format_number_adress(x,["phường","f","p","phuong",])
+        # x = format_number_adress(x,["quận","q","quan"])
         try:
             df["MatchTP"] = df.apply(lambda row: last_check(row["Tỉnh/TP"],x),axis=1)
             df["MatchQH"] = df.apply(lambda row: last_check(row["Quận/Huyện"],x),axis=1)
@@ -280,7 +270,7 @@ def render_(x,data_,dict_,test,dict_index_):
             df_finan_result = df[df["FinalScore"] == max_score_file]
             df_finan_result["Code_"] = df_finan_result.apply(lambda row: create_key(row["FinalText"],row["Xã/Phường"],row["Quận/Huyện"],row["Tỉnh/TP"]),axis=1)
             df_finan_result = df_finan_result.drop_duplicates(subset=['Code_'])
-            t = 0
+            amount_ = 0
             for idx in df_finan_result.index:
                 t = df["FinalText"][idx]
                 check = False
@@ -293,8 +283,8 @@ def render_(x,data_,dict_,test,dict_index_):
                         dict_result_compoment[list_key_result[i]] = None
                 dict_result_compoment["Số Điện Thoại"] = sdt
                 list_Result.append(dict_result_compoment.copy())
-                t +=1
-                if t == 3:
+                amount_ +=1
+                if amount_ == 3:
                     break
         except:
             return list_Result
