@@ -25,12 +25,12 @@ def transform_raw(sentence):
     for i in arr_key_bo:
         sentence = sentence.replace(i,"")
     return sentence
-data_base["Tỉnh Thành Phố"] = data_base["Tỉnh Thành Phố"].apply(lambda row: transform_raw(row))
-data_base["Quận Huyện"] = data_base["Quận Huyện"].apply(lambda row: transform_raw(row))
-data_base["Phường Xã"] = data_base["Phường Xã"].apply(lambda row: transform_raw(row))
-key_tinh_tp = pd.unique(pd.Series(data_base["Tỉnh Thành Phố"]))
-key_huyen = pd.unique(pd.Series(data_base["Quận Huyện"]))
-key_phuong = pd.unique(pd.Series(data_base["Phường Xã"]))
+data_base["Tỉnh/TP"] = data_base["Tỉnh Thành Phố"].apply(lambda row: transform_raw(row))
+data_base["Quận/Huyện"] = data_base["Quận Huyện"].apply(lambda row: transform_raw(row))
+data_base["Xã/Phường"] = data_base["Phường Xã"].apply(lambda row: transform_raw(row))
+key_tinh_tp = pd.unique(pd.Series(data_base["Tỉnh/TP"]))
+key_huyen = pd.unique(pd.Series(data_base["Quận/Huyện"]))
+key_phuong = pd.unique(pd.Series(data_base["Xã/Phường"]))
 
 def getWord(word):
     if pd.isna(word):
@@ -80,7 +80,8 @@ for i in range(len(Key_UniCon)):
 dict_alias = {
     "Hn": "Hà Nội",
     "Hcm": "Hồ Chí Minh",
-    "Dn":"Đà Nẵng"
+    "Dn":"Đà Nẵng",
+    "brvt":"Bà Rịa Vũng Tàu"
 }
 for key, value in dict_alias.items():
     dict_co_dau[key] = 1
@@ -168,13 +169,13 @@ def caculator_base(x,dict_,co_dau = True):
     return s
 
 def setup_data(file_data,dict_,co_dau):
-    file_data["CODE_1"] = file_data.apply(lambda row: ghep(row["Tỉnh Thành Phố"],row["Quận Huyện"],row["Phường Xã"]),axis=1)
-    file_data["CODE_2"] = file_data.apply(lambda row: ghep(row["Tỉnh Thành Phố"],row["Quận Huyện"]),axis=1)
-    file_data["CODE_3"] = file_data.apply(lambda row: ghep(row["Tỉnh Thành Phố"],row["Phường Xã"]),axis=1)
-    file_data["CODE_4"] = file_data.apply(lambda row: ghep(row["Quận Huyện"],row["Phường Xã"]),axis=1)
-    file_data["CODE_5"] = file_data.apply(lambda row: ghep(row["Tỉnh Thành Phố"]),axis=1)
-    file_data["CODE_6"] = file_data.apply(lambda row: ghep(row["Quận Huyện"]),axis=1)
-    file_data["CODE_7"] = file_data.apply(lambda row: ghep(row["Phường Xã"]),axis=1)
+    file_data["CODE_1"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Quận/Huyện"],row["Xã/Phường"]),axis=1)
+    file_data["CODE_2"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Quận Huyện"]),axis=1)
+    file_data["CODE_3"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Xã/Phường"]),axis=1)
+    file_data["CODE_4"] = file_data.apply(lambda row: ghep(row["Quận/Huyện"],row["Xã/Phường"]),axis=1)
+    file_data["CODE_5"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"]),axis=1)
+    file_data["CODE_6"] = file_data.apply(lambda row: ghep(row["Quận/Huyện"]),axis=1)
+    file_data["CODE_7"] = file_data.apply(lambda row: ghep(row["Xã/Phường"]),axis=1)
     file_data["TICH_1"] = file_data["CODE_1"].apply(lambda row: caculator_base(row,dict_,co_dau))
     file_data["TICH_2"] = file_data["CODE_2"].apply(lambda row: caculator_base(row,dict_,co_dau))
     file_data["TICH_3"] = file_data["CODE_3"].apply(lambda row: caculator_base(row,dict_,co_dau))
@@ -183,7 +184,6 @@ def setup_data(file_data,dict_,co_dau):
     file_data["TICH_6"] = file_data["CODE_6"].apply(lambda row: caculator_base(row,dict_,co_dau))
     file_data["TICH_7"] = file_data["CODE_7"].apply(lambda row: caculator_base(row,dict_,co_dau))
     return file_data
-
 dict_relationship = {
     1:[5,6,7],
     2:[5,6],
@@ -195,7 +195,6 @@ dict_relationship = {
 }
 data_co_dau = setup_data(data_base.copy(),dict_co_dau,True)
 data_khong_dau = setup_data(data_base.copy(),dict_khong_dau,False)
-
 def create_arr_key(data_):
     dict_ = {}
     for i in range(1,8):
