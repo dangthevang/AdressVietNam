@@ -31,7 +31,7 @@ data_base["Xã/Phường"] = data_base["Phường Xã"].apply(lambda row: transf
 key_tinh_tp = pd.unique(pd.Series(data_base["Tỉnh/TP"]))
 key_huyen = pd.unique(pd.Series(data_base["Quận/Huyện"]))
 key_phuong = pd.unique(pd.Series(data_base["Xã/Phường"]))
-
+List_TP = [i.upper() for i in data_base["Tỉnh/TP"].values]
 def getWord(word):
     if pd.isna(word):
         return word
@@ -170,7 +170,7 @@ def caculator_base(x,dict_,co_dau = True):
 
 def setup_data(file_data,dict_,co_dau):
     file_data["CODE_1"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Quận/Huyện"],row["Xã/Phường"]),axis=1)
-    file_data["CODE_2"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Quận Huyện"]),axis=1)
+    file_data["CODE_2"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Quận/Huyện"]),axis=1)
     file_data["CODE_3"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"],row["Xã/Phường"]),axis=1)
     file_data["CODE_4"] = file_data.apply(lambda row: ghep(row["Quận/Huyện"],row["Xã/Phường"]),axis=1)
     file_data["CODE_5"] = file_data.apply(lambda row: ghep(row["Tỉnh/TP"]),axis=1)

@@ -4,6 +4,7 @@ import json
 import time
 import heapq
 from .__init__ import *
+from .key_delete import *
 
 def getAPI(request):
     input_string = ""
@@ -71,6 +72,13 @@ def checkSpecifixSymtax(s,dict_):
             return i
     return checkEncoding(s,dict_)
 
+def checkCounty(s):
+    s = s.upper()
+    for i in List_TP:
+        if s.find(i) != -1:
+            s = s.replace(i,f" {i} ")
+    return s
+
 def format_number_adress(address_string,list_key):
     sentence = address_string.lower()
     for key_ in list_key:
@@ -96,10 +104,14 @@ def delete_key(sentence):
 
 def split_text(x,dict_):
     arr = []
-    x = x.replace("-",' ').replace(",",' ').replace(".",' ').replace("_",' ')
+    # x = x.replace("-",' ').replace(",",' ').replace(".",' ').replace("_",' ').replace("/",' ')
+    x = checkCounty(x)
+    for i in escape:
+        x = x.replace(i,' ')
+    for i in common_postfix:
+        x = x.replace(i,' ')
     x = format_number_adress(x,["phường","f","p","phuong"])
     x = format_number_adress(x,["quận","q","quan"])
-
     x = delete_key(x)
     x = x.split(" ")
     for i in range(len(x)):
@@ -122,10 +134,8 @@ def getIndexRange(text):
     return []
 
 def step_adress(x,data_,dict_,dict_index):
-    index,idx_run = 0,0
+    idx_run = 0
     amount = len(x)
-    result = pd.DataFrame()
-    text_result = None
     dict_result = {}
     for cap in range(amount,0,-1):
         idx_run = cap
@@ -199,15 +209,11 @@ def filter_name_adress(text,list_index,dict_,data,number):
 
 def get_adress(x,data_,dict_,dict_index):
     arr = split_text(x,dict_)
-    # print(x)
     if len(arr) == 0:
         return pd.DataFrame()," ".join(arr)
-    index = 0
-    check = False
     dict_result = step_adress(arr,data_,dict_,dict_index)
-    # print(dict_result)
     try:
-        list_max = heapq.nlargest(2, list(dict_result.values()))
+        list_max = heapq.nlargest(3, list(dict_result.values()))
     except ValueError:
         return pd.DataFrame()," ".join(arr)
     arr_idx = []
@@ -225,13 +231,18 @@ def convert_2(text):
     return output
 
 
-def last_check(sentence,a):
-    sentence = convert_2(sentence.replace("_"," ")).upper()
-    a = convert_2(a.replace("_"," ")).upper()
-    m_0 = re.search(sentence,a)
-    if m_0 is not None:
-        return 1
-    return 0
+def last_check(a,*arg):
+    result = []
+    for sentence in arg:
+        sentence = convert_2(sentence.replace("_"," ")).upper()
+        a = convert_2(a.replace("_"," ")).upper()
+        m_0 = re.search(sentence,a)
+        if m_0 is not None:
+            # a = a.replace(sentence,"",1)
+            result.append(1)
+        else:
+            result.append(0)
+    return pd.Series(result)
 
 def create_key(code,*arg):
     s = ""
@@ -242,6 +253,7 @@ def create_key(code,*arg):
 
 def render_(x,data_,dict_,test,dict_index_):
     list_key_result = ["Xã/Phường", "Quận/Huyện","Tỉnh/TP","Số Điện Thoại"]
+    list_key_respond = ["Phường Xã","Quận Huyện","Tỉnh Thành Phố","Số Điện Thoại"]
     dict_result_compoment = {}
     for key in list_key_result:
         dict_result_compoment[key] = None
@@ -250,18 +262,13 @@ def render_(x,data_,dict_,test,dict_index_):
     df,sdt = step_phone(x)
     df,x = get_adress(x,data_,dict_,dict_index_)
     if df.empty and test == True:
-        x = convert_2(x)
+        x = convert_2(Address_Special)
         return render_(x,data_khong_dau,dict_khong_dau,False,dict_index_khong_dau)
     else:
-        # print(x)
         for key,value in dict_alias.items():
             x = x.replace(key,value)
-        # x = format_number_adress(x,["phường","f","p","phuong",])
-        # x = format_number_adress(x,["quận","q","quan"])
         try:
-            df["MatchTP"] = df.apply(lambda row: last_check(row["Tỉnh/TP"],x),axis=1)
-            df["MatchQH"] = df.apply(lambda row: last_check(row["Quận/Huyện"],x),axis=1)
-            df["MatchPX"] = df.apply(lambda row: last_check(row["Xã/Phường"],x),axis=1)
+            df[["MatchQH","MatchTP","MatchPX"]] = df.apply(lambda row: last_check(x,row["Quận/Huyện"],row["Tỉnh/TP"],row["Xã/Phường"]),axis=1)
             df["FinalScore"] = df["MatchTP"]+df["MatchQH"]+df["MatchPX"]
             df["FinalText"] = df.apply(lambda row: "".join([str(row["MatchPX"]),str(row["MatchQH"]),str(row["MatchTP"])]),axis=1)
             max_score_file = df["FinalScore"].max()
@@ -278,7 +285,7 @@ def render_(x,data_,dict_,test,dict_index_):
                     if t[i] =="1":
                         check = True
                     if check == True:
-                        dict_result_compoment[list_key_result[i]] = df_finan_result[list_key_result[i]][idx]
+                        dict_result_compoment[list_key_result[i]] = df_finan_result[list_key_respond[i]][idx]
                     else:
                         dict_result_compoment[list_key_result[i]] = None
                 dict_result_compoment["Số Điện Thoại"] = sdt
